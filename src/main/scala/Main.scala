@@ -1,23 +1,8 @@
 package com.mathieubolla.glacierfreezer
 
-import scala.collection.JavaConversions._
-import org.apache.commons.io.IOUtils
-import java.io.{ByteArrayInputStream, InputStream, FileInputStream, FileOutputStream, File}
-
-import com.amazonaws.{AmazonClientException, AmazonServiceException}
-import com.amazonaws.auth.{AWSCredentials, PropertiesCredentials}
-import com.amazonaws.services.sqs.AmazonSQSClient
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest
-import com.amazonaws.services.glacier.{AmazonGlacierClient, TreeHashGenerator}
-import com.amazonaws.services.glacier.model.{DescribeVaultRequest, UploadArchiveRequest, JobParameters, InitiateJobRequest}
-import com.amazonaws.util.BinaryUtils;
-
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-
 import com.mathieubolla.glacierfreezer.Utils._
-
 import scala.io.Source
+import java.io.File
 
 object Glacier {
 	def main(args:Array[String]) {
