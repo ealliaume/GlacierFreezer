@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.io.{InputStream, FileWriter, PrintWriter, FileInputStream}
 
 import org.apache.commons.io.IOUtils
+import Constants._
 
 object Utils {
 	def walkFiles:(File) => Iterable[File] = (base:File) => {
@@ -44,7 +45,7 @@ object Utils {
 
 	def configFor(propertyName:String) = {
 		val properties = new java.util.Properties
-		properties.load(new FileInputStream(new File(Constants.UserHomeConfig)))
+		properties.load(new FileInputStream(new File(UserHomeConfig)))
 		properties.getProperty(propertyName)
 	}
 }

@@ -11,20 +11,22 @@ import com.amazonaws.util.BinaryUtils;
 
 import java.io.{ByteArrayInputStream, InputStream, FileInputStream, FileOutputStream, File}
 
+import org.apache.commons.io.IOUtils
 import Utils._
+import Constants._
 
 object Services {
-	lazy val amazonCredentials = new PropertiesCredentials(new File(Constants.UserHomeCredentials))
+	lazy val amazonCredentials = new PropertiesCredentials(new File(UserHomeCredentials))
 
 	lazy val glacier = {
 		val client = new AmazonGlacierClient(amazonCredentials)
-		client.setEndpoint(Constants.Glacier(Constants.Ireland))
+		client.setEndpoint(Constants.Glacier(Ireland))
 		client
 	}
 
 	lazy val sqs = {
 		val client = new AmazonSQSClient(amazonCredentials)
-		client.setEndpoint(Constants.Sqs(Constants.Ireland))
+		client.setEndpoint(Sqs(Ireland))
 		client
 	}
 
@@ -52,4 +54,24 @@ object Services {
 			}
 		}
 	}
+
+	def freeze(input:(File, String)) = {
+			val inputFile = input._1
+			val sha1 = input._2
+
+			val byteArray = IOUtils.toByteArray(new FileInputStream(inputFile))
+			val request = new UploadArchiveRequest().withVaultName(configFor("vault.name"))
+				.withChecksum(TreeHashGenerator.calculateTreeHash(inputFile))
+				.withBody(new ByteArrayInputStream(byteArray))
+				.withContentLength(inputFile.length())
+
+			try {
+				(inputFile.getCanonicalPath, sha1, Some(Services.glacier.uploadArchive(request)))
+			} catch {
+				case e:Exception => {
+					Console.println("Got an error with " + inputFile + "and SHA-1 " + sha1 + ". Error is "+e.getMessage())
+					(inputFile.getCanonicalPath, sha1, None)
+				}
+			}
+		}
 }

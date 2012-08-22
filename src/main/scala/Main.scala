@@ -37,50 +37,15 @@ object Glacier {
 			cache
 		}
 
-		val freeze = (input:(File, String)) => {
-			val inputFile = input._1
-			val sha1 = input._2
-
-			val byteArray = IOUtils.toByteArray(new FileInputStream(inputFile))
-			val request = new UploadArchiveRequest().withVaultName(configFor("vault.name"))
-				.withChecksum(TreeHashGenerator.calculateTreeHash(inputFile))
-				.withBody(new ByteArrayInputStream(byteArray))
-				.withContentLength(inputFile.length())
-
-			try {
-				(inputFile.getCanonicalPath, sha1, Some(Services.glacier.uploadArchive(request)))
-			} catch {
-				case e:Exception => {
-					Console.println("Got an error with " + inputFile + "and SHA-1 " + sha1 + ". Error is "+e.getMessage())
-					(inputFile.getCanonicalPath, sha1, None)
-				}
-			}
-		}
-
 		val results = walkFiles(new File(getUserInput("Photo path to upload: ", "/tmp/photo")))
 			.filter(regularFile => regularFile.getCanonicalPath().endsWith(".CR2"))
 			.map(regularFile => (regularFile, computeSha1(regularFile)))
 			.filter(pairOfPathAndSha1 => !cache.contains(pairOfPathAndSha1._2))
-			.map(pairOfPathAndSha1 => freeze(pairOfPathAndSha1))
+			.map(pairOfPathAndSha1 => Services.freeze(pairOfPathAndSha1))
 
 		results.filter(a => a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 + "\t" + a._3.get.getArchiveId()))
 		results.filter(a => !a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 +"\tfailed"))
 
 		//Services.dumpInventory(Services.prepareInventory(configFor("vault.name")))
 	}	
-}
-
-object Constants {
-	val Ireland = "eu-west-1"
-	val NorthernVirginia = "us-east-1"
-	val NorthernCalifornia = "us-west-1"
-	val Oregon = "us-west-2"
-	val Japan = "ap-northeast-1"
-
-	def Glacier(region:String) = "https://glacier." + region + ".amazonaws.com/"
-	def Sqs(region:String) = "https://sqs." + region + ".amazonaws.com/"
-
-	val UserCredentialsProperty = "credentials.path"
-	lazy val UserHomeCredentials = System.getProperty("user.home") + "/.ec2/credentials.properties"
-	lazy val UserHomeConfig = System.getProperty("user.home") + "/.ec2/freezer.properties"
 }
