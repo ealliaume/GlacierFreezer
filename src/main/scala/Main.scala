@@ -13,16 +13,10 @@ import com.amazonaws.util.BinaryUtils;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
+import com.mathieubolla.glacierfreezer.Utils._
+
 object Glacier {
 	def main(args:Array[String]) {
-		lazy val children:(File) => Iterable[File] = (base:File) => {
-			if (base.isDirectory) {
-				base.listFiles.flatMap(element => children(element))
-			} else {
-				Seq(base)
-			}
-		}
-
 		lazy val configSupplier = () => {
 			val computed = System.getProperty(Constants.UserCredentialsProperty, Constants.UserHomeCredentials)
 			Console.println(computed)
@@ -68,7 +62,7 @@ object Glacier {
 			}
 		}
 
-		val results = children(new File(get("Photo path to upload: ", "/tmp/photo")))
+		val results = walkFiles(new File(get("Photo path to upload: ", "/tmp/photo")))
 			.filter(a => a.getCanonicalPath().endsWith(".CR2"))
 			.map(a => glacier("Photos", a.getCanonicalPath))
 
@@ -85,19 +79,4 @@ object Constants {
 	val GlacierJapan = "https://glacier.ap-northeast-1.amazonaws.com/"
 	val UserCredentialsProperty = "credentials.path"
 	lazy val UserHomeCredentials = System.getProperty("user.home") + "/.ec2/credentials.properties"
-}
-
-class Sha1DigestInputStream(delegate:InputStream) extends DigestInputStream(delegate, MessageDigest.getInstance("SHA-1")) {
-	def getSha1():String = {
-		val hash = getMessageDigest().digest()
-		val hexString = new StringBuilder()
-		for (aHash <- hash) {
-			val hex = Integer.toHexString(0xFF & aHash);
-			if (hex.length() == 1) {
-				hexString.append('0');
-			}
-			hexString.append(hex);
-		}
-		return hexString.toString();
-	}
 }
