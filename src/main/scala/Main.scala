@@ -21,7 +21,7 @@ object Glacier {
 	def main(args:Array[String]) {
 		lazy val configSupplier = () => {
 			val computed = System.getProperty(Constants.UserCredentialsProperty, Constants.UserHomeCredentials)
-			Console.println(computed)
+			Console.println("Getting the AWS Credentials from " + computed)
 			computed
 		}
 
