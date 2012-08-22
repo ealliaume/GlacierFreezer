@@ -43,7 +43,7 @@ object Glacier {
 					case CacheLine(path, sha1, archiveId) => {
 						cache.put(sha1, archiveId)
 					}
-					case _ => Console.println("No decoder for " + line)
+					case _ => Console.println("No decoder for " + line + ". Your cache.dat file seems to be corrupted.")
 				}
 			}
 			cache
