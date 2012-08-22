@@ -3,7 +3,9 @@ package com.mathieubolla.glacierfreezer
 import java.io.File
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.io.{InputStream, FileWriter, PrintWriter}
+import java.io.{InputStream, FileWriter, PrintWriter, FileInputStream}
+
+import org.apache.commons.io.IOUtils
 
 object Utils {
 	def walkFiles:(File) => Iterable[File] = (base:File) => {
@@ -21,6 +23,30 @@ object Utils {
     		printWriter => printWriter.println(textData)
     	}
   	}
+
+	def getUserInput = (prompt:String, defaultValue:String) => {
+		Console.print(prompt)
+		Console.readLine() match {
+			case "" => {
+				defaultValue;
+			}
+			case value@_ => {
+				value;
+			}
+		}
+	}
+
+	def computeSha1(file:File) = {
+			val sha1DigestIS = new Sha1DigestInputStream(new FileInputStream(file))
+			IOUtils.toByteArray(sha1DigestIS)
+			sha1DigestIS.getSha1()
+	}
+
+	def configFor(propertyName:String) = {
+		val properties = new java.util.Properties
+		properties.load(new FileInputStream(new File(Constants.UserHomeConfig)))
+		properties.getProperty(propertyName)
+	}
 }
 
 class Sha1DigestInputStream(delegate:InputStream) extends DigestInputStream(delegate, MessageDigest.getInstance("SHA-1")) {
