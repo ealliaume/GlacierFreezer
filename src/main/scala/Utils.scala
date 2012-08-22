@@ -3,7 +3,7 @@ package com.mathieubolla.glacierfreezer
 import java.io.File
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.io.InputStream
+import java.io.{InputStream, FileWriter, PrintWriter}
 
 object Utils {
 	def walkFiles:(File) => Iterable[File] = (base:File) => {
@@ -13,6 +13,14 @@ object Utils {
 			Seq(base)
 		}
 	}
+
+	def using[A <: {def close(): Unit}, B](param: A)(f: A => B): B = try { f(param) } finally { param.close() }
+
+	def appendToFile(fileName:String, textData:String) = using(new FileWriter(fileName, true)) {
+    	fileWriter => using(new PrintWriter(fileWriter)) {
+    		printWriter => printWriter.println(textData)
+    	}
+  	}
 }
 
 class Sha1DigestInputStream(delegate:InputStream) extends DigestInputStream(delegate, MessageDigest.getInstance("SHA-1")) {

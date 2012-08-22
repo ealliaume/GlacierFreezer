@@ -33,7 +33,7 @@ object Glacier {
 			client
 		}
 
-		val loadCache = () => {
+		lazy val cache = {
 			val CacheLine = "(.*)[\t](.*)[\t](.*)".r
 			val Failure = "(.*)[\t](.*)[\t]failed".r
 			val cache = new scala.collection.mutable.HashMap[String, String]
@@ -49,21 +49,19 @@ object Glacier {
 			cache
 		}
 
-		val glacier = (vaultName:String, path:String) => {
-			val archive = new File(path)
-			val sha1DigestIS = new Sha1DigestInputStream(new FileInputStream(archive))
-			val byteArray = IOUtils.toByteArray(sha1DigestIS)
-			val sha1 = sha1DigestIS.getSha1()
+		val glacier = (vaultName:String, inputFile:File, sha1:String) => {
+			val byteArray = IOUtils.toByteArray(new FileInputStream(inputFile))
 			val request = new UploadArchiveRequest().withVaultName(vaultName)
-				.withChecksum(TreeHashGenerator.calculateTreeHash(archive))
+				.withChecksum(TreeHashGenerator.calculateTreeHash(inputFile))
 				.withBody(new ByteArrayInputStream(byteArray))
-				.withContentLength(archive.length())
+				.withContentLength(inputFile.length())
 
 			try {
-				(path, sha1, Some(client().uploadArchive(request)))
+				(inputFile.getCanonicalPath, sha1, Some(client().uploadArchive(request)))
 			} catch {
 				case e:Exception => {
-					(path, sha1, None)
+					Console.println("Got an error with " + inputFile + "and SHA-1 " + sha1 + ". Error is "+e.getMessage())
+					(inputFile.getCanonicalPath, sha1, None)
 				}
 			}
 		}
@@ -81,12 +79,18 @@ object Glacier {
 		}
 
 		val results = walkFiles(new File(get("Photo path to upload: ", "/tmp/photo")))
-			.filter(a => a.getCanonicalPath().endsWith(".CR2"))
-			.map(a => glacier("Photos", a.getCanonicalPath))
+			.filter(regularFilePath => regularFilePath.getCanonicalPath().endsWith(".CR2"))
+			.map(regularFilePath => {
+				val sha1DigestIS = new Sha1DigestInputStream(new FileInputStream(regularFilePath))
+				IOUtils.toByteArray(sha1DigestIS)
+				(regularFilePath, sha1DigestIS.getSha1())
+			})
+			.filter(pairOfPathAndSha1 => !cache.contains(pairOfPathAndSha1._2))
+			.map(pairOfPathAndSha1 => glacier("Photos", pairOfPathAndSha1._1, pairOfPathAndSha1._2))
 
-		results.filter(a => a._3.isDefined).map(a => Console.println(a._1 + "\t" + a._2 + "\t" + a._3.get.getArchiveId()))
-		results.filter(a => !a._3.isDefined).map(a => Console.println(a._1 + "\t" + a._2 +"\tfailed"))
-	}
+		results.filter(a => a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 + "\t" + a._3.get.getArchiveId()))
+		results.filter(a => !a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 +"\tfailed"))
+	}	
 }
 
 object Constants {
