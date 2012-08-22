@@ -5,8 +5,7 @@ import scala.io.Source
 import java.io.File
 
 object Glacier {
-	def main(args:Array[String]) {
-		lazy val cache = {
+	lazy val cache = {
 			val CacheLine = "(.*)[\t](.*)[\t](.*)".r
 			val Failure = "(.*)[\t](.*)[\t]failed".r
 			val cache = new scala.collection.mutable.HashMap[String, String]
@@ -22,15 +21,23 @@ object Glacier {
 			cache
 		}
 
-		val results = walkFiles(new File(getUserInput("Photo path to upload: ", "/tmp/photo")))
-			.filter(regularFile => regularFile.getCanonicalPath().endsWith(".CR2"))
-			.map(regularFile => (regularFile, computeSha1(regularFile)))
-			.filter(pairOfPathAndSha1 => !cache.contains(pairOfPathAndSha1._2))
-			.map(pairOfPathAndSha1 => Services.freeze(pairOfPathAndSha1))
+	def main(args:Array[String]) {
+		getUserInput("What do you want to do now? [quit|upload|check]", "quit") match {
+			case "upload" => {
+				val results = walkFiles(new File(getUserInput("Where are your pictures? [/tmp/photo]: ", "/tmp/photo")))
+					.filter(regularFile => regularFile.getCanonicalPath().endsWith(".CR2"))
+					.map(regularFile => (regularFile, computeSha1(regularFile)))
+					.filter(pairOfPathAndSha1 => !cache.contains(pairOfPathAndSha1._2))
+					.map(pairOfPathAndSha1 => Services.freeze(pairOfPathAndSha1))
 
-		results.filter(a => a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 + "\t" + a._3.get.getArchiveId()))
-		results.filter(a => !a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 +"\tfailed"))
+					results.filter(a => a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 + "\t" + a._3.get.getArchiveId()))
+					results.filter(a => !a._3.isDefined).map(a => appendToFile("cache.dat", a._1 + "\t" + a._2 +"\tfailed"))
+				}
+			case "check" => {
+				Services.dumpInventory(configFor("vault.name"))
+			}
 
-		//Services.dumpInventory(Services.prepareInventory(configFor("vault.name")))
+			case _ => System.exit(0)
+		}
 	}	
 }
