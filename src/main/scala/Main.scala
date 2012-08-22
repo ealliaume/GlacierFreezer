@@ -1,4 +1,4 @@
-package fr.splayce.proto
+package com.mathieubolla.glacierfreezer
 
 import scala.collection.JavaConversions._
 import org.apache.commons.io.IOUtils
