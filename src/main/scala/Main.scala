@@ -26,7 +26,7 @@ object Glacier {
 		getUserInput("What do you want to do now? [quit|upload|check]: ", "quit") match {
 			case "upload" => {
 				val results = walkFiles(new File(getUserInput("Where are your pictures? [/tmp/photo]: ", "/tmp/photo")))
-					.filter(regularFile => regularFile.getCanonicalPath().endsWith(".CR2"))
+					.filter(regularFile => regularFile.getCanonicalPath().endsWith(".NEF"))
 					.map(regularFile => (regularFile, computeSha1(regularFile)))
 					.filter(pairOfPathAndSha1 => !cache.contains(pairOfPathAndSha1._2))
 					.map(pairOfPathAndSha1 => Services.freeze(pairOfPathAndSha1))

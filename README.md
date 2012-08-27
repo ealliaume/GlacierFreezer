@@ -3,7 +3,7 @@ Glacier Freezer
 
 **Purpose**
 
-This will try to upload your .CR2 files (a minor modification would allow different behaviours...) to Amazon Glacier. Works on Ireland endpoint. Others are constants ready to use. Makes use of your existing ~/.ec2/credentials.properties, which should be in the form:
+This will try to upload your .NEF files (a minor modification would allow different behaviours...) to Amazon Glacier. Works on Ireland endpoint. Others are constants ready to use. Makes use of your existing ~/.ec2/credentials.properties, which should be in the form:
 
     accessKey=<your-aws-access-key>
     secretKey=<your-aws-secret-key>
